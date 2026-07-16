@@ -1,0 +1,10 @@
+{
+  "name": "cp-sidekick",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight browser extension that prepares LLM prompts from Codeforces problems.",
+  "scripts": {
+    "check": "node --check src/codeforcesExtractor.js && node --check src/promptBuilder.js && node --check src/content.js && node --check src/background.js && node --check popup/popup.js",
+    "test": "node tests/promptBuilder.test.js"
+  }
+}

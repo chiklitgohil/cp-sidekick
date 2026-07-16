@@ -1,0 +1,39 @@
+body {
+  min-width: 260px;
+  margin: 0;
+  color: #111827;
+  background: #ffffff;
+  font: 14px/1.45 Arial, sans-serif;
+}
+
+.popup {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.hint {
+  margin: 0;
+  color: #4b5563;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status {
+  min-height: 20px;
+  margin: 0;
+  color: #047857;
+}

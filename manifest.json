@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "CP Sidekick",
+  "version": "0.1.0",
+  "description": "Capture Codeforces problems and prepare focused AI prompts with one click.",
+  "permissions": ["activeTab", "clipboardWrite", "scripting", "tabs"],
+  "host_permissions": ["https://codeforces.com/*", "https://*.codeforces.com/*"],
+  "action": {
+    "default_title": "CP Sidekick",
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://codeforces.com/problemset/problem/*/*",
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/gym/*/problem/*"
+      ],
+      "css": ["src/content.css"],
+      "js": [
+        "src/codeforcesExtractor.js",
+        "src/promptBuilder.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

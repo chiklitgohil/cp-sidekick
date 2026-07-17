@@ -7,12 +7,24 @@
     await navigator.clipboard.writeText(prompt);
   };
 
-  const openProvider = (provider) => {
-    chrome.runtime.sendMessage({
-      type: "CP_SIDEKICK_OPEN_LLM",
-      provider
+  const openProvider = (provider, problemUrl) =>
+    new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        {
+          type: "CP_SIDEKICK_OPEN_LLM",
+          provider,
+          problemUrl
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            resolve({ ok: false });
+            return;
+          }
+
+          resolve(response || { ok: false });
+        }
+      );
     });
-  };
 
   const createModeOptions = (selectedMode) =>
     Object.entries(root.promptModes)
@@ -53,10 +65,6 @@
               <option value="gemini">Gemini</option>
             </select>
           </label>
-          <label class="cp-sidekick-label">
-            Prompt preview
-            <textarea class="cp-sidekick-preview" rows="12"></textarea>
-          </label>
         </div>
         <footer class="cp-sidekick-footer">
           <span class="cp-sidekick-status" aria-live="polite"></span>
@@ -68,7 +76,6 @@
       </section>
     `;
 
-    const preview = backdrop.querySelector(".cp-sidekick-preview");
     const codeInput = backdrop.querySelector(".cp-sidekick-user-code");
     const status = backdrop.querySelector(".cp-sidekick-status");
     const provider = backdrop.querySelector(".cp-sidekick-provider");
@@ -79,7 +86,6 @@
         mode,
         userCode: codeInput.value
       });
-      preview.value = prompt;
     };
 
     const setStatus = (message) => {
@@ -107,20 +113,28 @@
       const action = event.target.dataset.action;
       if (!action) return;
 
-      prompt = preview.value;
+      refreshPrompt();
       try {
         await copyPrompt(prompt);
-        setStatus("Prompt copied.");
-        if (action === "copy-open") openProvider(provider.value);
+        if (action === "copy-open") {
+          const result = await openProvider(provider.value, problem.url);
+          if (!result.ok) {
+            setStatus("Prompt copied. Open the AI chat manually.");
+            return;
+          }
+
+          setStatus(result.reused ? "Prompt copied. Switched to existing chat." : "Prompt copied. Opened AI chat.");
+        } else {
+          setStatus("Prompt copied.");
+        }
       } catch (error) {
-        setStatus("Copy failed. Select the preview and copy it manually.");
+        setStatus("Copy failed. Please try again.");
       }
     });
 
     refreshPrompt();
     document.body.appendChild(backdrop);
-    preview.focus();
-    preview.select();
+    codeInput.focus();
   };
 
   const button = document.createElement("button");

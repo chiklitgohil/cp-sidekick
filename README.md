@@ -2,7 +2,7 @@
 
 One-click AI help for competitive programming.
 
-CP Sidekick is a lightweight Chrome/Edge extension that turns competitive programming problems into guided AI conversations without copy-pasting. V1 supports Codeforces problem pages and builds learning-first prompts that you can copy or open in ChatGPT, Claude, or Gemini.
+CP Sidekick is a lightweight Chrome/Edge/Firefox extension that turns competitive programming problems into guided AI conversations without copy-pasting. V1 supports Codeforces problem pages and builds learning-first prompts that you can copy or open in ChatGPT, Claude, or Gemini.
 
 CP Sidekick is not an AI solver. It is a prompt companion for practice, upsolving, debugging, and learning.
 
@@ -35,6 +35,8 @@ V1 targets Codeforces:
 
 ## Installation From Source
 
+### Chrome or Edge
+
 1. Clone or download this repository.
 2. Open Chrome or Edge and go to the extensions page:
    - Chrome: `chrome://extensions`
@@ -43,6 +45,18 @@ V1 targets Codeforces:
 4. Choose Load unpacked.
 5. Select the repository folder.
 6. Open a supported Codeforces problem page and click Ask AI.
+
+### Firefox Temporary Install
+
+1. Clone or download this repository.
+2. Open Firefox and go to `about:debugging#/runtime/this-firefox`.
+3. Click Load Temporary Add-on.
+4. Select this repository's `manifest.json` file.
+5. Open a supported Codeforces problem page and click Ask AI.
+
+Temporary add-ons are removed when Firefox restarts. For regular Firefox distribution, the extension must be signed through Mozilla Add-ons.
+
+The manifest includes both `background.service_worker` for Chrome/Edge and `background.scripts` for Firefox.
 
 ## Development
 

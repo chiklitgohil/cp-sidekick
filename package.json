@@ -1,11 +1,17 @@
 {
   "name": "cp-sidekick",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "A lightweight browser extension that prepares LLM prompts from Codeforces problems.",
+  "description": "One click from a Codeforces, AtCoder or LeetCode problem to a learning-first AI chat.",
   "license": "Apache-2.0",
   "scripts": {
-    "check": "node --check src/codeforcesExtractor.js && node --check src/promptBuilder.js && node --check src/content.js && node --check src/background.js && node --check popup/popup.js",
-    "test": "node tests/promptBuilder.test.js && node tests/background.test.js"
+    "check": "node scripts/check.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "icons": "node scripts/make-icons.js",
+    "build:firefox": "node scripts/build-firefox.js",
+    "package": "npm run check && npm test && node scripts/package.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
   }
 }

@@ -1,100 +1,185 @@
+// Builds the prompt sent to the AI chat, and the button text for each help mode.
+// Plain text on purpose: rich chat inputs (ProseMirror, Quill) turn markdown such as
+// "# " or triple backticks into formatting while text is inserted.
 (function () {
+  const NS = (globalThis.CPSidekick = globalThis.CPSidekick || {});
+
+  // Ordered roughly by how much they give away.
+  // needsCode: the prompt ends with "My code:" and is never auto-sent, so the user
+  // can paste their code at the end of the same message first.
   const MODES = {
-    hints: {
-      label: "Hints only",
+    understand: {
+      label: "Understand",
+      short: "Understand",
+      description: "Explains the statement and samples. No solution ideas.",
       instruction:
-        "Help me with hints only. Do not reveal the full solution or code unless I explicitly ask. Start with the smallest useful hint, then wait for my response."
+        "Help me understand the problem only. Restate it in simple terms, explain the input and output format, and walk through the examples step by step. Do not hint at the solution, the approach, or the algorithm."
     },
-    socratic: {
-      label: "Socratic mode",
+    hints: {
+      label: "Hint",
+      short: "Hint",
+      description: "Small nudges or guiding questions, one at a time. No spoilers.",
       instruction:
-        "Guide me Socratically. Ask one focused question at a time, adapt based on my answers, and avoid giving away the full solution unless I ask for it."
+        "Give me hints only, one at a time, starting with the smallest useful nudge. A hint can be a guiding question. Do not reveal the full solution or write code unless I explicitly ask. After each hint, wait for my reply."
     },
     intuition: {
-      label: "Explain intuition",
+      label: "Intuition",
+      short: "Intuition",
+      description: "The key observations behind the solution, without code.",
       instruction:
-        "Explain the core intuition and the path to discovering the solution. Keep it beginner-friendly but rigorous, and separate intuition from implementation details."
+        "Explain the key observations and how one would discover the solution. Keep intuition separate from implementation details. No full code unless I ask."
     },
-    review: {
-      label: "Find bug in my solution",
+    debug: {
+      label: "Debug",
+      short: "Debug",
+      needsCode: true,
+      description: "Paste your failing code: finds the bug and the test that breaks it.",
       instruction:
-        "Review my solution attempt. Look for logical bugs, missed edge cases, complexity problems, and implementation pitfalls. If I did not paste code yet, ask me to paste it before diagnosing."
+        "My solution gets Wrong Answer, Time Limit Exceeded or a runtime error. My code is at the end of this message. Find the bug: point to the exact lines, explain why they fail, and give a small test case that breaks them. Then list edge cases I should test. Don't rewrite the whole solution unless I ask. If my code is missing, ask me to paste it."
     },
-    optimal: {
-      label: "Optimal solution after attempt",
+    refine: {
+      label: "Refine",
+      short: "Refine",
+      needsCode: true,
+      description: "Paste your working code: better approach, cleaner code, and why.",
       instruction:
-        "Give the optimal approach now. Include the main idea, proof sketch, time and memory complexity, edge cases, and concise implementation guidance."
+        "My solution works. My code is at the end of this message. Help me refine it: (1) a better algorithm or complexity if one exists, (2) cleaner structure and clearer names, (3) competitive programming best practices such as fast I/O, overflow safety and avoiding needless copies. For every suggestion, explain why it is better than what I did. Then show the refined version. If my code is missing, ask me to paste it."
+    },
+    solution: {
+      label: "Solution",
+      short: "Solution",
+      description: "Full approach, proof and code, for after you've tried.",
+      instruction:
+        "I have already attempted this problem. Explain the optimal approach: main idea, proof sketch, time and memory complexity, edge cases, and a clean reference implementation."
     }
   };
 
+  // Modes from earlier versions, mapped so saved settings keep working.
+  const LEGACY_MODES = { socratic: "hints", review: "debug" };
+
+  const DEFAULT_MODE = "hints";
   const clean = (value) => (value || "").trim();
 
-  const formatExamples = (examples) => {
-    if (!examples || examples.length === 0) return "No samples extracted.";
+  const resolveMode = (mode) => (MODES[mode] ? mode : LEGACY_MODES[mode] || DEFAULT_MODE);
+  const modeFor = (mode) => MODES[resolveMode(mode)];
+  // Short on purpose: "Hint · Claude". Sits in the corner of the problem page.
+  const buttonLabel = (mode, aiLabel) => `${modeFor(mode).short} · ${aiLabel}`;
+  const needsCode = (mode) => Boolean(modeFor(mode).needsCode);
 
-    return examples
-      .map((example) => {
-        return [
-          `Example ${example.index}:`,
-          "Input:",
+  const section = (title, body) => (clean(body) ? `${title}:\n${clean(body)}` : "");
+
+  const formatLimits = (limits = {}) => {
+    const parts = [];
+    if (limits.time) parts.push(`time limit ${limits.time}`);
+    if (limits.memory) parts.push(`memory limit ${limits.memory}`);
+    const io = [limits.input, limits.output].filter((v) => v && !/standard/i.test(v));
+    if (io.length) parts.push(`files: ${io.join(" / ")}`);
+    return parts.join(", ");
+  };
+
+  const formatExamples = (examples = []) =>
+    examples
+      .map((example) =>
+        [
+          `Example ${example.index} input:`,
           clean(example.input) || "(empty)",
-          "Output:",
-          clean(example.output) || "(empty)"
-        ].join("\n");
-      })
+          `Example ${example.index} output:`,
+          clean(example.output) || "(empty)",
+          ...(clean(example.explanation) ? [`Example ${example.index} explanation:`, clean(example.explanation)] : [])
+        ].join("\n")
+      )
       .join("\n\n");
-  };
 
-  const formatMeta = (meta = {}) => {
-    const lines = [];
-    if (meta.timeLimit) lines.push(`Time limit: ${meta.timeLimit}`);
-    if (meta.memoryLimit) lines.push(`Memory limit: ${meta.memoryLimit}`);
-    if (meta.inputFile) lines.push(`Input: ${meta.inputFile}`);
-    if (meta.outputFile) lines.push(`Output: ${meta.outputFile}`);
-    return lines.length ? lines.join("\n") : "No metadata extracted.";
-  };
+  const TRUNCATION_NOTE = "...(truncated; the full statement is at the URL above)";
+  const COMPACT_EXAMPLES = 2;
 
-  const buildPrompt = ({ problem, mode = "hints", userCode = "" }) => {
-    const modeConfig = MODES[mode] || MODES.hints;
-    const constraints = problem.constraints?.length ? problem.constraints.join("\n") : "No constraints extracted separately.";
+  // compact: for URL hand-off (Google AI Mode), where the prompt travels in the URL.
+  // Keeps the first examples, drops extras, and fits the statement into maxChars.
+  const buildPrompt = ({ problem, mode = DEFAULT_MODE, compact = false, maxChars = Infinity }) => {
+    if (compact) {
+      const slim = {
+        ...problem,
+        images: [],
+        starterCode: null,
+        examples: (problem.examples || []).slice(0, COMPACT_EXAMPLES).map((e) => ({ ...e, explanation: "" }))
+      };
+      let prompt = buildPrompt({ problem: slim, mode });
+      const overflow = prompt.length - maxChars;
+      if (overflow > 0 && slim.statement) {
+        const keep = Math.max(0, slim.statement.length - overflow - TRUNCATION_NOTE.length - 1);
+        slim.statement = `${slim.statement.slice(0, keep).trimEnd()}\n${TRUNCATION_NOTE}`;
+        prompt = buildPrompt({ problem: slim, mode });
+      }
+      return prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
+    }
 
-    return [
-      `I am solving this ${problem.platform || "competitive programming"} problem.`,
+    const modeConfig = modeFor(mode);
+    const limits = formatLimits(problem.limits);
+    const extra = (problem.extraSections || []).map((s) => section(s.title, s.text));
+
+    const remarks = [];
+    if (problem.interactive) remarks.push("This is an interactive problem.");
+    if (problem.language && problem.language !== "en") {
+      remarks.push("The statement is only available in Japanese; please read it as such and answer in English.");
+    }
+    if (problem.images?.length) {
+      remarks.push(
+        `The statement contains ${problem.images.length} image(s) I could not include; they are marked as [image: URL].`
+      );
+    }
+
+    const heading = [
+      `Problem: ${clean(problem.title)} (${problem.platform || "Online judge"}`,
+      problem.difficulty ? `, ${problem.difficulty}` : "",
+      ")"
+    ].join("");
+
+    // Code modes: the user's own code replaces the starter code.
+    const starter =
+      problem.starterCode?.code && !modeConfig.needsCode
+        ? section(`Starter code (${problem.starterCode.lang})`, problem.starterCode.code)
+        : "";
+
+    const prompt = [
+      `I'm practicing competitive programming. ${modeConfig.instruction}`,
+      "Math is written in LaTeX.",
+      remarks.join(" "),
       "",
-      `Mode: ${modeConfig.label}`,
-      modeConfig.instruction,
+      heading,
+      clean(problem.url),
+      limits ? `Limits: ${limits}` : "",
       "",
-      "Please preserve the learning value. If the selected mode asks for hints or Socratic guidance, do not jump to the final answer.",
+      section("Statement", problem.statement),
       "",
-      "Problem:",
-      `Title: ${clean(problem.title)}`,
-      `URL: ${clean(problem.url)}`,
+      section("Constraints", problem.constraints),
       "",
-      "Metadata:",
-      formatMeta(problem.meta),
+      section("Input", problem.input),
       "",
-      "Statement:",
-      clean(problem.statement) || "No statement extracted.",
+      section("Output", problem.output),
+      ...extra.flatMap((s) => ["", s]),
       "",
-      "Input format:",
-      clean(problem.input) || "No input format extracted.",
+      section("Examples", formatExamples(problem.examples)),
       "",
-      "Output format:",
-      clean(problem.output) || "No output format extracted.",
+      section("Note", problem.notes),
       "",
-      "Constraints and useful limits:",
-      constraints,
-      "",
-      "Examples:",
-      formatExamples(problem.examples),
-      problem.notes ? ["", "Notes:", clean(problem.notes)].join("\n") : "",
-      userCode ? ["", "My current solution attempt:", "```", userCode.trim(), "```"].join("\n") : ""
+      starter
     ]
-      .filter((part) => part !== "")
-      .join("\n");
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    // Ends where the user pastes their code; the cursor is left right here.
+    return modeConfig.needsCode ? `${prompt}\n\nMy code:\n` : prompt;
   };
 
-  window.CPSidekick = window.CPSidekick || {};
-  window.CPSidekick.promptModes = MODES;
-  window.CPSidekick.buildPrompt = buildPrompt;
+  NS.promptModes = MODES;
+  NS.DEFAULT_MODE = DEFAULT_MODE;
+  NS.resolveMode = resolveMode;
+  NS.buildPrompt = buildPrompt;
+  NS.buttonLabel = buttonLabel;
+  NS.needsCode = needsCode;
+
+  if (typeof module !== "undefined") {
+    module.exports = { buildPrompt, buttonLabel, needsCode, resolveMode, MODES, LEGACY_MODES, DEFAULT_MODE };
+  }
 })();

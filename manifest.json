@@ -1,42 +1,74 @@
 {
   "manifest_version": 3,
   "name": "CP Sidekick",
-  "version": "0.1.0",
-  "description": "Capture Codeforces problems and prepare focused AI prompts with one click.",
-  "permissions": ["activeTab", "clipboardWrite", "scripting", "storage", "tabs"],
+  "version": "1.1.0",
+  "description": "One click from a Codeforces, AtCoder or LeetCode problem to a learning-first chat in ChatGPT, Claude, Gemini or Google AI Mode.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
   "host_permissions": [
     "https://codeforces.com/*",
-    "https://*.codeforces.com/*"
+    "https://*.codeforces.com/*",
+    "https://atcoder.jp/*",
+    "https://leetcode.com/*"
   ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "cp-sidekick@example.com",
-      "strict_min_version": "128.0",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
+  "action": {
+    "default_title": "CP Sidekick settings",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
     }
   },
-  "action": {
-    "default_title": "CP Sidekick",
-    "default_popup": "popup/popup.html"
+  "options_ui": {
+    "page": "popup/popup.html",
+    "open_in_tab": false
   },
   "background": {
-    "scripts": ["src/background.js"],
     "service_worker": "src/background.js"
   },
   "content_scripts": [
     {
       "matches": [
-        "https://codeforces.com/problemset/problem/*/*",
-        "https://codeforces.com/contest/*/problem/*",
-        "https://codeforces.com/gym/*/problem/*"
+        "https://*.codeforces.com/problemset/problem/*",
+        "https://*.codeforces.com/contest/*/problem/*",
+        "https://*.codeforces.com/gym/*/problem/*",
+        "https://atcoder.jp/contests/*/tasks/*",
+        "https://leetcode.com/*"
       ],
-      "css": ["src/content.css"],
+      "css": [
+        "src/content.css"
+      ],
       "js": [
-        "src/codeforcesExtractor.js",
+        "src/shared/providers.js",
         "src/promptBuilder.js",
+        "src/shared/settings.js",
+        "src/platforms/domText.js",
+        "src/platforms/codeforces.js",
+        "src/platforms/atcoder.js",
+        "src/platforms/leetcode.js",
         "src/content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "src/shared/providers.js",
+        "src/providerContent.js"
       ],
       "run_at": "document_idle"
     }

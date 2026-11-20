@@ -6,7 +6,7 @@ Thanks for helping improve CP Sidekick. This project aims to be a small, transpa
 
 CP Sidekick is a prompt bridge, not an in-extension AI solver. Contributions should preserve these principles:
 
-- Keep the user in control of what is copied or opened.
+- Keep the user in control: nothing happens without a click, and auto-send stays opt-in.
 - Prefer learning-first prompts over answer-first automation.
 - Avoid collecting data, storing API keys, or adding a backend without a clear project decision.
 - Keep permissions narrow and explain any new permission in the pull request.
@@ -14,7 +14,8 @@ CP Sidekick is a prompt bridge, not an in-extension AI solver. Contributions sho
 
 ## Good First Contributions
 
-- Improve Codeforces problem extraction reliability.
+- Improve extraction reliability on Codeforces, AtCoder or LeetCode (add a fixture under `tests/fixtures/`).
+- Update AI-site selectors in `src/shared/providers.js` when ChatGPT, Claude or Gemini change their pages.
 - Add tests for prompt formatting and edge cases.
 - Improve prompt wording for learning value.
 - Improve accessibility and keyboard usability.
@@ -25,9 +26,12 @@ CP Sidekick is a prompt bridge, not an in-extension AI solver. Contributions sho
 Run:
 
 ```sh
+npm install
 npm run check
 npm test
 ```
+
+For changes that touch a live site (extraction, AI-site filling), also run the relevant part of [TESTING.md](TESTING.md).
 
 If a check cannot run, mention that in the pull request.
 
@@ -43,10 +47,10 @@ If a check cannot run, mention that in the pull request.
 
 New platform support should be added only when the extraction behavior is reliable and scoped. A platform contribution should include:
 
-- URL patterns.
-- A dedicated extractor or clearly separated extraction logic.
-- Tests or documented manual test cases.
-- Notes about platform-specific contest or AI-assistance rules if relevant.
+- A file in `src/platforms/` implementing `{ id, name, matches(url), extract(doc, url), liveContest(doc, url) }` (see the top of `codeforces.js`), using `domText.toText` for text.
+- URL patterns and host permissions in `manifest.json`. `npm run check` fails if the file isn't wired up.
+- A fixture test under `tests/` built from the site's real markup.
+- A live-contest check if the platform runs contests, plus notes about its AI-assistance rules.
 
 ## Community Standards
 

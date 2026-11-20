@@ -1,146 +1,71 @@
-.cp-sidekick-button {
+/* CP Sidekick page button. Brand: Teal Coach (see BRAND.md).
+   `all: initial` keeps Codeforces / AtCoder / LeetCode styles from leaking in.
+   data-theme is set by content.js from the real background behind the button:
+   "on-light" for light pages, "on-dark" for dark modes and Dark Reader. */
+
+#cp-sidekick-button {
+  all: initial;
   position: fixed;
-  right: 18px;
-  bottom: 18px;
+  right: 16px;
+  bottom: 16px;
   z-index: 2147483000;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 14px;
-  border: 1px solid #1f2937;
-  border-radius: 8px;
-  background: #111827;
-  color: #ffffff;
-  font: 600 13px/1.2 Arial, sans-serif;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
-  cursor: pointer;
-}
-
-.cp-sidekick-button:hover {
-  background: #0f172a;
-}
-
-.cp-sidekick-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.42);
-}
-
-.cp-sidekick-dialog {
-  width: min(560px, 100%);
-  max-height: min(620px, calc(100vh - 48px));
-  overflow: auto;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #111827;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.34);
-  font: 14px/1.45 Arial, sans-serif;
-}
-
-.cp-sidekick-header,
-.cp-sidekick-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.cp-sidekick-footer {
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 0;
-}
-
-.cp-sidekick-title {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.2;
-}
-
-.cp-sidekick-close {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #374151;
-  cursor: pointer;
-}
-
-.cp-sidekick-body {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-}
-
-.cp-sidekick-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.cp-sidekick-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  max-width: min(340px, calc(100vw - 32px));
   min-height: 38px;
-  padding: 9px 10px;
-  border: 1px solid #d1d5db;
+  padding: 8px 14px;
+  border: 1px solid #115e59;
   border-radius: 8px;
-  background: #f9fafb;
-  cursor: pointer;
-}
-
-.cp-sidekick-option input {
-  margin: 0;
-}
-
-.cp-sidekick-label {
-  display: grid;
-  gap: 6px;
-  font-weight: 700;
-}
-
-.cp-sidekick-label textarea,
-.cp-sidekick-label select {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px;
-  font: 13px/1.45 Consolas, "Courier New", monospace;
-}
-
-.cp-sidekick-primary,
-.cp-sidekick-secondary {
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cp-sidekick-primary {
-  border: 1px solid #2563eb;
-  background: #2563eb;
+  background: #0f766e;
   color: #ffffff;
+  font: 600 13px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(11, 18, 32, 0.18), 0 3px 10px rgba(11, 18, 32, 0.12);
 }
 
-.cp-sidekick-secondary {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #111827;
+#cp-sidekick-button .cp-sidekick-label {
+  all: initial;
+  color: inherit;
+  font: inherit;
 }
 
-.cp-sidekick-status {
-  color: #047857;
-  font-size: 13px;
+#cp-sidekick-button:hover:not(:disabled) {
+  background: #115e59;
+}
+
+#cp-sidekick-button:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+#cp-sidekick-button:disabled {
+  border-color: #94a3b8;
+  background: #e2e8f0;
+  color: #334155;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Dark pages: lighter teal fill with ink text, light hairline border, deeper shadow. */
+#cp-sidekick-button[data-theme="on-dark"] {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: #2dd4bf;
+  color: #0b1220;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+#cp-sidekick-button[data-theme="on-dark"]:hover:not(:disabled) {
+  background: #5eead4;
+}
+
+#cp-sidekick-button[data-theme="on-dark"]:disabled {
+  border-color: #475569;
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+#cp-sidekick-button[hidden] {
+  display: none;
 }

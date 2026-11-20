@@ -3,16 +3,62 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CP Sidekick</title>
+    <title>CP Sidekick settings</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
-    <main class="popup">
-      <h1>CP Sidekick</h1>
-      <p class="hint">Open a Codeforces problem page and use the Ask AI button.</p>
-      <button id="openPrompt" type="button">Build prompt from this tab</button>
+    <main class="settings">
+      <header class="brand">
+        <img src="../icons/icon-48.png" alt="" width="28" height="28">
+        <div>
+          <h1>CP Sidekick</h1>
+          <p class="tagline">Your rubber duck for competitive programming. Now it talks back.</p>
+        </div>
+      </header>
+
+      <section id="welcome" class="welcome" hidden>
+        <p><strong>You're set up.</strong> Here's how it works:</p>
+        <ol>
+          <li>Open a problem on Codeforces, AtCoder or LeetCode.</li>
+          <li>Click the button in the bottom-right corner (for example "Hint · ChatGPT").</li>
+          <li>Your AI opens next to the problem with everything filled in, ready to help the way you choose below.</li>
+        </ol>
+      </section>
+
+      <p class="hint" id="hint">Open a problem on Codeforces, AtCoder or LeetCode and click the button in the bottom-right corner.</p>
+
+      <fieldset>
+        <legend>How should it help?</legend>
+        <div id="modes" class="options"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>AI assistant</legend>
+        <div id="providers" class="options"></div>
+      </fieldset>
+
+      <label class="check" id="autoSendRow">
+        <input type="checkbox" id="autoSend">
+        <span>
+          <span class="option-title">Send automatically</span>
+          <span class="option-desc" id="autoSendNote">Off: the prompt is filled in and you press Enter.</span>
+        </span>
+      </label>
+
+      <div class="preview">
+        <span class="option-desc">Your button:</span>
+        <span id="preview" class="preview-button"></span>
+      </div>
+
       <p id="status" class="status" aria-live="polite"></p>
+
+      <footer>
+        <a href="https://github.com/chiklitgohil/cp-sidekick/issues" target="_blank" rel="noopener">Report a problem</a>
+      </footer>
     </main>
+    <script src="../src/shared/providers.js"></script>
+    <script src="../src/promptBuilder.js"></script>
+    <script src="../src/shared/settings.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
